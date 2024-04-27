@@ -7,3 +7,14 @@ authors = ["Lennard Brinkhaus <lennard.brinkhaus@dragse.de>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+dotenvy = "0.15"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = { version = "1.0" }
+anyhow = "1.0"
+tokio = { version = "1.32", features = ["full"] }
+chrono = "0.4"
+log = "0.4"
+env_logger = "0.11"
+teloxide = { version = "0.12", features = ["macros"] }
+futures = "0.3"
