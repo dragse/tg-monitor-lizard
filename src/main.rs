@@ -1,4 +1,6 @@
 mod telegram;
+mod etcd;
+mod model;
 
 use std::env;
 use dotenvy::dotenv;

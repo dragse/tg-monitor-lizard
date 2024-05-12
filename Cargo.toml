@@ -18,3 +18,6 @@ log = "0.4"
 env_logger = "0.11"
 teloxide = { version = "0.12", features = ["macros"] }
 futures = "0.3"
+etcd-client = "0.12"
+lazy_static = "1.4"
+async_once = "0.2"
