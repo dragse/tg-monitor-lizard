@@ -37,16 +37,17 @@ pub async fn delete_group_validation(group_id: i64) -> anyhow::Result<()> {
 pub async fn get_group_validations() -> anyhow::Result<Vec<model::GroupConfiguration>> {
     let mut etcd = ETCD_CLIENT.get().await.clone();
 
-    let path = format!("/dragons_realm//configurations/{}", etcd.tenant);
+    let path = format!("/tg_monitor_lizard/{}/group/configurations", etcd.tenant);
     etcd.get_items(path.as_str()).await
 }
 
-pub async fn get_group_validation(hoard_id: i64) -> anyhow::Result<model::GroupConfiguration> {
+
+pub async fn get_group_validation(group_id: teloxide::types::ChatId) -> anyhow::Result<model::GroupConfiguration> {
     let mut etcd = ETCD_CLIENT.get().await.clone();
 
     let path = format!(
-        "/dragons_realm/{}//configurations/{}",
-        etcd.tenant, hoard_id
+        "/tg_monitor_lizard/{}/group/configurations/{}",
+        etcd.tenant, group_id
     );
     etcd.get_item(path.as_str()).await
 }

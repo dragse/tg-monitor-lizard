@@ -1,1 +1,7 @@
-pub enum TelegramCli {}
+use teloxide::macros::BotCommands;
+
+#[derive(BotCommands, Clone)]
+#[command(rename_rule = "lowercase", parse_with = "split")]
+pub enum TelegramCli {
+    UpdateJoin(String)
+}

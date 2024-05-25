@@ -1,12 +1,14 @@
 mod telegram;
 mod etcd;
 mod model;
+pub mod util;
 
 use std::env;
 use dotenvy::dotenv;
 use env_logger::TimestampPrecision;
 use log::{info};
-use teloxide::{prelude::*, utils::command::BotCommands};
+use teloxide::{prelude::*};
+use crate::model::{GroupConfiguration, JoinValidation};
 
 
 #[tokio::main]
@@ -19,6 +21,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let telegram_token = env::var("TELEGRAM_TOKEN").expect("'TELEGRAM_TOKEN' is an required environment variable");
     let telegram_bot = Bot::new(telegram_token);
+
+    etcd::save_group_validation(-1001299964433, GroupConfiguration {
+        join_validation: JoinValidation::InlineKeyboardButtonMath,
+    }).await.expect("Problem while saving Group configuration");
 
     let bot_info = telegram_bot.get_me().await?;
     info!("Connect to Telegram with Bot: @{}", bot_info.username());

@@ -1,15 +1,18 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub enum JoinValidation {
+    #[default]
     Disabled,
     InlineKeyboardButtonMath,
 }
 
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct GroupConfiguration {
+    pub join_message: String,
     pub join_validation: JoinValidation,
+    pub leave_message: String
 }
 
 impl Into<Vec<u8>> for GroupConfiguration {

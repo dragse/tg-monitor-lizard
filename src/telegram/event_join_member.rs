@@ -1,26 +1,31 @@
-use log::info;
-use teloxide::{prelude::*, utils::html};
+use std::vec;
+use teloxide::{prelude::*};
+use teloxide::types::{InlineKeyboardButton, InlineKeyboardMarkup};
+use crate::{etcd, util};
+use crate::model::JoinValidation;
 
 pub(crate) async fn execute(bot: Bot, message: Message) -> ResponseResult<()> {
-    info!("JOIN");
-    let users = message.new_chat_members().unwrap_or_default();
 
-    let telegram_group_name = message.chat.title().unwrap_or("");
+    let group_configuration = etcd::get_group_validation(message.chat.id).await.unwrap();
 
-    for user in users {
-        // We get a "@username" mention via `mention()` method if the user has a
-        // username, otherwise we create a textual mention with "Full Name" as the
-        // text linking to the user
-        let username = user
-            .mention()
-            .unwrap_or_else(|| html::user_mention(user.id.0 as i64, user.full_name().as_str()));
-
-        bot.send_message(
-            message.chat.id,
-            format!("Welcome to {telegram_group_name} {username}!"),
-        )
-        .await?;
+    if group_configuration.join_message.len() == 0 {
+        return Ok(());
     }
 
-    Ok(())
+    match group_configuration.join_validation {
+        JoinValidation::Disabled => Ok(()),
+        JoinValidation::InlineKeyboardButtonMath => {
+
+            let length = 3;
+
+            let mut markup = InlineKeyboardMarkup::default();
+
+            for i in 0..length {
+                markup = markup.append_row(vec![InlineKeyboardButton::callback(util::generate_calculation(i == 0), format!("UserValidation: {}", i == 0))])
+            }
+
+            bot.send_message(message.chat.id, group_configuration.join_message).reply_markup(markup).await?;
+            Ok(())
+        }
+    }
 }
