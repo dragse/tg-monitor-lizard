@@ -1,7 +1,8 @@
+pub use initial::initial_dispatcher;
+
 mod cli;
-mod initial;
 pub mod event_join_member;
 pub mod event_left_member;
+mod initial;
+mod util;
 
-
-pub use initial::initial_dispatcher;
