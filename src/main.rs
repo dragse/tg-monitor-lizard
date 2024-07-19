@@ -11,6 +11,7 @@ mod etcd;
 mod model;
 mod telegram;
 pub mod util;
+pub mod error;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

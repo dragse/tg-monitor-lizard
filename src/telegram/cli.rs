@@ -1,3 +1,4 @@
+use anyhow::Error;
 use log::info;
 use teloxide::{prelude::*, utils::command::BotCommands};
 
@@ -20,6 +21,7 @@ pub async fn telegram_cli_handler(
         TelegramCli::UpdateJoin(new_join_message) => {
             if !util::check_if_user_is_admin(&bot, &msg.chat.id, &msg.from().unwrap().id).await? {
                 // No permissions
+                info!("no permissions");
                 return Ok(());
             }
 
