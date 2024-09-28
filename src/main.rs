@@ -3,6 +3,7 @@ use std::env;
 use dotenvy::dotenv;
 use env_logger::TimestampPrecision;
 use log::info;
+use serde_json::json;
 use teloxide::prelude::*;
 
 use crate::model::{GroupConfiguration, JoinValidation};
@@ -29,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         -1001299964433,
         GroupConfiguration {
             join_message: "".to_string(),
-            join_validation: JoinValidation::InlineKeyboardButtonMath,
+            join_validation: JoinValidation::InlineKeyboardButtonMath {question_size: 5, allow_retry: false},
             leave_message: "".to_string(),
         },
     )

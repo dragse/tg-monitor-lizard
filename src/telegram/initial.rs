@@ -1,3 +1,5 @@
+use log::info;
+use static_events::simple_event;
 use teloxide::dispatching::UpdateFilterExt;
 use teloxide::prelude::*;
 use teloxide::types::Update;
@@ -14,7 +16,7 @@ pub async fn initial_dispatcher(bot: Bot) -> anyhow::Result<()> {
                 .endpoint(cli::telegram_cli_handler),
         )
         .branch(
-            Update::filter_message()
+            Update::filter_message().enter_dialogue()
                 .branch(
                     dptree::filter(|m: Message| m.new_chat_members().is_some())
                         .endpoint(event_join_member::execute),
@@ -22,7 +24,9 @@ pub async fn initial_dispatcher(bot: Bot) -> anyhow::Result<()> {
                 .branch(
                     dptree::filter(|m: Message| m.left_chat_member().is_some())
                         .endpoint(event_left_member::execute),
-                ),
+                ).endpoint(|(bot, msg)| {
+
+            }),
         );
 
     let _ = Dispatcher::builder(bot, handler)

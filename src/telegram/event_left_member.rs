@@ -12,7 +12,7 @@ pub(crate) async fn execute(bot: Bot, message: Message) -> ResponseResult<()> {
     if let Some(user) = message.left_chat_member() {
         let _ = user
             .mention()
-            .unwrap_or_else(|| html::user_mention(user.id.0 as i64, user.full_name().as_str()));
+            .unwrap_or_else(|| html::user_mention(user.id, user.full_name().as_str()));
 
         bot.send_message(message.chat.id, group_configuration.leave_message)
             .await?;

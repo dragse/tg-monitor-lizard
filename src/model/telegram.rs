@@ -4,7 +4,10 @@ use serde::{Deserialize, Serialize};
 pub enum JoinValidation {
     #[default]
     Disabled,
-    InlineKeyboardButtonMath,
+    InlineKeyboardButtonMath{
+        question_size: i32,
+        allow_retry: bool
+    },
 }
 
 

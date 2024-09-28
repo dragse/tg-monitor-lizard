@@ -14,13 +14,13 @@ pub(crate) async fn execute(bot: Bot, message: Message) -> ResponseResult<()> {
 
     match group_configuration.join_validation {
         JoinValidation::Disabled => Ok(()),
-        JoinValidation::InlineKeyboardButtonMath => {
-
-            let length = 3;
-
+        JoinValidation::InlineKeyboardButtonMath {
+            question_size,
+            allow_retry
+        } => {
             let mut markup = InlineKeyboardMarkup::default();
 
-            for i in 0..length {
+            for i in 0..question_size {
                 markup = markup.append_row(vec![InlineKeyboardButton::callback(util::generate_calculation(i == 0), format!("UserValidation: {}", i == 0))])
             }
 
