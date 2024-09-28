@@ -26,21 +26,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         env::var("TELEGRAM_TOKEN").expect("'TELEGRAM_TOKEN' is an required environment variable");
     let telegram_bot = Bot::new(telegram_token);
 
-    etcd::save_group_validation(
-        -1001299964433,
-        GroupConfiguration {
-            join_message: "".to_string(),
-            join_validation: JoinValidation::InlineKeyboardButtonMath {question_size: 5, allow_retry: false},
-            leave_message: "".to_string(),
-        },
-    )
-    .await
-    .expect("Problem while saving Group configuration");
-
-    let bot_info = telegram_bot.get_me().await?;
-    info!("Connect to Telegram with Bot: @{}", bot_info.username());
-
-    telegram::initial_dispatcher(telegram_bot).await?;
 
     Ok(())
 }
