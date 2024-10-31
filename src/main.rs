@@ -1,14 +1,22 @@
 use std::env;
 
 use dotenvy::dotenv;
+use dptree::{deps, Endpoint, Handler};
+use dptree::prelude::DependencyMap;
 use env_logger::TimestampPrecision;
-use frankenstein::{Api, GetUpdatesParams, ReplyParameters, SendMessageParams, TelegramApi, UpdateContent};
+use frankenstein::{Api, Chat, GetUpdatesParams, ReplyParameters, SendMessageParams, TelegramApi, Update, UpdateContent, Voice};
 use log::info;
 use serde_json::json;
+use crate::error::LizardError;
+use crate::handler::get_chat_fom_update;
 
 pub mod util;
 pub mod error;
 pub mod db;
+pub mod dialog;
+mod handler;
+
+type TelegramHandler = Handler<'static, DependencyMap, Result<(), LizardError>>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -24,6 +32,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let bot_info = api.get_me()?;
     info!("Connect to Telegram with Bot: @{:?}", bot_info.result.username);
+    
+    let dispatcher = dptree::entry()
+        .branch(has_chat())
+        .endpoint(test);
+
+
+
+
 
     let mut update_params = GetUpdatesParams::builder().build();
     loop {
@@ -34,20 +50,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         match result {
             Ok(response) => {
                 for update in response.result {
-                    if let UpdateContent::Message(message) = update.content {
-                        let reply_parameters = ReplyParameters::builder()
-                            .message_id(message.message_id)
-                            .build();
-                        let send_message_params = SendMessageParams::builder()
-                            .chat_id(message.chat.id)
-                            .text("hello")
-                            .reply_parameters(reply_parameters)
-                            .build();
-                        if let Err(error) = api.send_message(&send_message_params) {
-                            println!("Failed to send message: {error:?}");
-                        }
-                    }
-                    update_params.offset = Some(i64::from(update.update_id) + 1);
+                    let update_id = update.update_id;
+
+
+                    dispatcher.dispatch(dptree::deps![update]).await;
+                    update_params.offset = Some(i64::from(update_id) + 1);
                 }
             }
             Err(error) => {
@@ -56,5 +63,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+}
+
+fn has_chat() -> TelegramHandler {
+    dptree::filter_map(|update: Update| {
+        let chat = get_chat_fom_update(update.clone());
+
+        if let Some(chat) = chat {
+            Some(deps![update, chat])
+        } else {
+            None
+        }
+    })
+}
+
+
+fn test(update: Update, chat: Option<Box<Chat>>) -> Result<(), LizardError> {
     Ok(())
 }
