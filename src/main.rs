@@ -16,6 +16,7 @@ pub mod db;
 mod handler;
 mod plugin;
 mod event;
+mod modules;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -24,6 +25,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .format_timestamp(Some(TimestampPrecision::Millis))
         .is_test(true)
         .init();
+
+
+    let mut plugin_manager = plugin::PluginManager::new();
+    plugin_manager.register_plugin(Box::new(modules::demo::DemoPlugin{}));
+
+    plugin_manager.load_plugins();
+    plugin_manager.enable_plugins();
 
     let telegram_token =
         env::var("TELEGRAM_TOKEN").expect("'TELEGRAM_TOKEN' is an required environment variable");
@@ -35,16 +43,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut update_params = GetUpdatesParams::builder().build();
     loop {
         let result = api.get_updates(&update_params);
-
-        println!("result: {result:?}");
-
         match result {
             Ok(response) => {
                 for update in response.result {
                     let update_id = update.update_id;
 
                     update_params.offset = Some(i64::from(update_id) + 1);
-
+                    plugin_manager.call_event(update);
                 }
             }
             Err(error) => {
@@ -53,8 +58,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-}
-
-fn test(update: Update, chat: Option<Box<Chat>>) -> Result<(), LizardError> {
-    Ok(())
+    plugin_manager.disable_plugins();
 }
