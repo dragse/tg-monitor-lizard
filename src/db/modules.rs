@@ -14,7 +14,7 @@ pub struct Settings {
 #[diesel(table_name = crate::db::schema::moduledata)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct ModuleData {
-    module_identifier: String,
-    data_key: String,
-    data: serde_json::Value,
+    pub module_identifier: String,
+    pub data_key: String,
+    pub data: serde_json::Value,
 }
