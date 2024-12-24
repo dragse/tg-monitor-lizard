@@ -4,7 +4,7 @@ diesel::table! {
     moduledata (module_identifier, data_key) {
         module_identifier -> Text,
         data_key -> Text,
-        data -> Json,
+        data -> Jsonb,
     }
 }
 
@@ -13,7 +13,7 @@ diesel::table! {
         chat_id -> Int8,
         module_identifier -> Text,
         enabled -> Bool,
-        settings -> Json,
+        configuration -> Jsonb,
     }
 }
 
