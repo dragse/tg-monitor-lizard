@@ -1,5 +1,4 @@
 use dyn_clone::DynClone;
-use crate::event;
 use crate::plugin::listener::EventListener;
 
 #[derive(Debug, Clone)]

@@ -1,9 +1,12 @@
 #![allow(unused, unused_variables)]
 
 use std::env;
-
+use std::sync::Arc;
+use diesel::{r2d2, PgConnection};
+use diesel::r2d2::ConnectionManager;
 use dotenvy::dotenv;
 use env_logger::TimestampPrecision;
+use envconfig::Envconfig;
 use frankenstein::{Api, Chat, GetUpdatesParams, ReplyParameters, SendMessageParams, TelegramApi, Update, UpdateContent, Voice};
 use log::info;
 use serde_json::json;
@@ -15,7 +18,6 @@ pub mod error;
 pub mod db;
 mod handler;
 mod plugin;
-mod event;
 mod modules;
 
 #[tokio::main]
@@ -26,8 +28,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .is_test(true)
         .init();
 
+    let db_url =
+        env::var("DATABASE_URL").expect("'DATABASE_URL' is an required environment variable");
 
-    let mut plugin_manager = plugin::PluginManager::new();
+    let manager = ConnectionManager::<PgConnection>::new(db_url);
+    let pool = r2d2::Pool::builder()
+        .build(manager)?;
+
+    let mut plugin_manager = plugin::PluginManager::new(pool);
     plugin_manager.register_plugin(Box::new(modules::demo::DemoPlugin{}));
 
     plugin_manager.load_plugins();
@@ -41,15 +49,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Connect to Telegram with Bot: @{:?}", bot_info.result.username);
 
     let mut update_params = GetUpdatesParams::builder().build();
+    let arc_api = Arc::new(api);
     loop {
-        let result = api.get_updates(&update_params);
+        let result = arc_api.get_updates(&update_params);
         match result {
             Ok(response) => {
                 for update in response.result {
                     let update_id = update.update_id;
 
                     update_params.offset = Some(i64::from(update_id) + 1);
-                    plugin_manager.call_event(update);
+                    plugin_manager.call_event(arc_api.clone(), update);
                 }
             }
             Err(error) => {

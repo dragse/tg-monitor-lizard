@@ -1,7 +1,9 @@
 mod plugin;
 mod manager;
 mod listener;
-pub(crate) mod context;
+mod context;
 
 pub use plugin::*;
 pub use manager::*;
+pub use listener::*;
+pub use context::*;

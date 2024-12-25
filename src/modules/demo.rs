@@ -1,7 +1,7 @@
 use dyn_clone::DynClone;
-use frankenstein::Message;
+use frankenstein::{ChatId, Message, SendMessageParams, SendMessageParamsBuilder, TelegramApi};
 use log::info;
-use crate::event::EventListener;
+use crate::plugin::{EventContext, EventListener};
 use crate::plugin;
 use crate::plugin::PluginMetadata;
 
@@ -39,8 +39,12 @@ struct DemoListener {
 }
 
 impl EventListener for DemoListener {
-    fn handle_message(&self, data: Message) -> Option<()> {
-        info!("demo plugin received message: {:?}", data.text.unwrap_or("".to_string()));
+    fn handle_message(&self,ctx: EventContext, data: Message) -> Option<()> {
+        info!("demo plugin received message: {:?}", data.text.clone().unwrap_or("".to_string()));
+
+        let params = SendMessageParams::builder().chat_id(ChatId::Integer(data.chat.id)).text(data.text.unwrap_or("".to_string())).build();
+
+        ctx.api.send_message(&params);
 
         Some(())
     }

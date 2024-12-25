@@ -1,9 +1,10 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 use diesel::{r2d2, PgConnection};
 use diesel::r2d2::ConnectionManager;
-use frankenstein::{Update, UpdateContent};
+use frankenstein::{Api, Update, UpdateContent};
 use log::error;
-use crate::{db, event, util};
+use crate::{db, util};
 use crate::db::Settings;
 use crate::plugin::context::EventContext;
 use crate::plugin::listener::EventListener;
@@ -127,7 +128,7 @@ impl PluginManager{
         Ok(())
     }
 
-    pub fn call_event(&self, update: Update) -> anyhow::Result<()> {
+    pub fn call_event(&self, api: Arc<Api>, update: Update) -> anyhow::Result<()> {
         let mut connection = self.pool.get()?;
         let chat = util::get_chat_id_fom_update(update.clone());
 
@@ -156,7 +157,8 @@ impl PluginManager{
                 }
             }
         }).for_each(|(setting, f)| {
-            let ctx = EventContext::new(self.plugin_metadata[setting.module_identifier.clone()], setting, self.pool.clone());
+            let metadata = self.plugin_metadata[setting.module_identifier.as_str()].clone();
+            let ctx = EventContext::new(api.clone(), metadata, setting, self.pool.clone());
             match update.content.clone() {
                 UpdateContent::Message(data) => {
                     f.handle_message(ctx, data);

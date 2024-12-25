@@ -1,18 +1,22 @@
+use std::sync::Arc;
 use diesel::{r2d2, PgConnection};
 use diesel::r2d2::ConnectionManager;
+use frankenstein::Api;
 use crate::db;
 use crate::db::{ModuleData, Settings};
 use crate::plugin::PluginMetadata;
 
 pub struct EventContext {
+    pub api: Arc<Api>,
     metadata: PluginMetadata,
     setting: Settings,
     pool: r2d2::Pool<ConnectionManager<PgConnection>>
 }
 
 impl EventContext {
-    pub fn new(metadata: PluginMetadata, setting: Settings, pool: r2d2::Pool<ConnectionManager<PgConnection>>) -> Self {
+    pub fn new(api: Arc<Api>, metadata: PluginMetadata, setting: Settings, pool: r2d2::Pool<ConnectionManager<PgConnection>>) -> Self {
         Self {
+            api,
             metadata,
             setting,
             pool,
