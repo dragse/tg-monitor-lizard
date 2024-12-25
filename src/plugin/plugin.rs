@@ -1,4 +1,5 @@
 use dyn_clone::DynClone;
+use crate::plugin::Command;
 use crate::plugin::listener::EventListener;
 
 #[derive(Debug, Clone)]
@@ -10,6 +11,8 @@ pub struct PluginMetadata {
 
 pub trait Plugin: DynClone {
     fn get_data(&self) -> PluginMetadata;
+
+    fn get_cmd(&self) -> Vec<Command>;
 
     fn on_load(&self);
 

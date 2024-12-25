@@ -2,14 +2,14 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use diesel::{r2d2, PgConnection};
 use diesel::r2d2::ConnectionManager;
-use frankenstein::{Api, Update, UpdateContent};
+use frankenstein::{Api, SendMessageParams, TelegramApi, Update, UpdateContent};
 use log::error;
 use crate::{db, util};
 use crate::db::Settings;
 use crate::plugin::context::EventContext;
 use crate::plugin::listener::EventListener;
 use crate::plugin::plugin::Plugin;
-use crate::plugin::PluginMetadata;
+use crate::plugin::{Command, CommandContext, PluginMetadata};
 
 #[derive(Clone)]
 pub enum PluginState {
@@ -26,24 +26,29 @@ pub struct BotPlugin {
 }
 
 pub struct PluginManager{
+    root: Command,
     plugins: HashMap<String, BotPlugin>,
     plugin_metadata: HashMap<String, PluginMetadata>,
     functions: HashMap<String, Box<dyn EventListener>>,
-    pool: r2d2::Pool<ConnectionManager<PgConnection>>
+    pool: r2d2::Pool<ConnectionManager<PgConnection>>,
 }
 
 impl PluginManager{
     pub fn new(pool: r2d2::Pool<ConnectionManager<PgConnection>>)-> Self{
-        Self{
+        let mut instance = Self{
+            root: Command::new("", "", None),
             functions: HashMap::new(),
             plugins: HashMap::new(),
             plugin_metadata: HashMap::new(),
             pool
-        }
+        };
+
+        instance
     }
 
     pub fn register_plugin(&mut self,plugin: Box<dyn Plugin>){
         let metadata = plugin.get_data();
+        let cmds = plugin.get_cmd();
 
         self.plugins.insert(metadata.key.clone(),
             BotPlugin{
@@ -52,6 +57,9 @@ impl PluginManager{
             }
         );
         self.plugin_metadata.insert(metadata.key.clone(), metadata);
+        for cmd in cmds {
+            self.root.add_cmd(cmd);
+        }
     }
 
     pub fn load_plugins(&mut self) -> anyhow::Result<()> {
@@ -129,6 +137,29 @@ impl PluginManager{
     }
 
     pub fn call_event(&self, api: Arc<Api>, update: Update) -> anyhow::Result<()> {
+        match &update.content {
+            UpdateContent::Message(msg) |
+            UpdateContent::ChannelPost(msg) |
+            UpdateContent::BusinessMessage(msg) => {
+                if let Some(mut text) = msg.text.clone() {
+                    if text.starts_with("/") {
+                        let ctx = CommandContext{
+                            api,
+                            message: msg.clone(),
+                            pool: self.pool.clone(),
+                        };
+                        text.remove(0);
+                        let mut args = text.split(" ").map(|str| str.to_owned()).collect::<Vec<String>>();
+                        args.insert(0, "".to_owned());
+
+                        self.root.execute(&ctx, args.as_slice());
+                        return Ok(())
+                    }
+                }
+            }
+            _ => {}
+        };
+
         let mut connection = self.pool.get()?;
         let chat = util::get_chat_id_fom_update(update.clone());
 

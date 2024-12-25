@@ -1,7 +1,7 @@
 use dyn_clone::DynClone;
 use frankenstein::{ChatId, Message, SendMessageParams, SendMessageParamsBuilder, TelegramApi};
 use log::info;
-use crate::plugin::{EventContext, EventListener};
+use crate::plugin::{Command, EventContext, EventListener};
 use crate::plugin;
 use crate::plugin::PluginMetadata;
 
@@ -17,6 +17,10 @@ impl plugin::Plugin for DemoPlugin {
             name: "Demo Plugin".to_string(),
             description: "A Demo plugin to test everything".to_string(),
         }
+    }
+
+    fn get_cmd(&self) -> Vec<Command> {
+        vec![]
     }
 
     fn on_load(&self) {
