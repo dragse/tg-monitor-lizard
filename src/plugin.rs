@@ -3,6 +3,7 @@ mod manager;
 mod listener;
 mod context;
 mod cmd;
+mod module_cmd;
 
 pub use plugin::*;
 pub use manager::*;

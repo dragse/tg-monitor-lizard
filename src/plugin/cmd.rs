@@ -1,12 +1,14 @@
 use std::sync::Arc;
 use diesel::{r2d2, PgConnection};
 use diesel::r2d2::ConnectionManager;
-use frankenstein::{Api, Message, SendMessageParams, TelegramApi, Update};
+use frankenstein::{Api, Message, ParseMode, SendMessageParams, TelegramApi, Update};
+use crate::plugin::PluginManager;
 
-pub struct CommandContext {
+pub struct CommandContext<'a> {
     pub api: Arc<Api>,
     pub message: Message,
     pub pool: r2d2::Pool<ConnectionManager<PgConnection>>,
+    pub plugin_manager: &'a PluginManager,
 }
 
 pub struct Command {
@@ -43,10 +45,10 @@ impl Command {
             "help" => {
                 let mut msg = "Available Commands: \n".to_owned();
                 for cmd in &self.cmds {
-                    msg = format!("{msg}- {}: {}", cmd.r#use, cmd.short)
+                    msg = format!("{msg}\\- `{}`: {}\n", cmd.r#use, cmd.short)
                 }
 
-                ctx.api.send_message(&SendMessageParams::builder().text(msg).chat_id(ctx.message.chat.id).build());
+                ctx.api.send_message(&SendMessageParams::builder().text(msg).chat_id(ctx.message.chat.id).parse_mode(ParseMode::MarkdownV2).build());
                 return
             }
             _ => {}
@@ -55,7 +57,7 @@ impl Command {
         let sub_cmd = args[1].as_str();
 
         for cmd in &self.cmds {
-            if cmd.r#use == sub_cmd {
+            if cmd.r#use.eq(sub_cmd) {
                 return cmd.execute(ctx, &args[1..]);
             }
         }

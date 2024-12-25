@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::Deref;
 use std::sync::Arc;
 use diesel::{r2d2, PgConnection};
 use diesel::r2d2::ConnectionManager;
@@ -10,6 +11,7 @@ use crate::plugin::context::EventContext;
 use crate::plugin::listener::EventListener;
 use crate::plugin::plugin::Plugin;
 use crate::plugin::{Command, CommandContext, PluginMetadata};
+use crate::plugin::module_cmd::get_module_cmd;
 
 #[derive(Clone)]
 pub enum PluginState {
@@ -43,7 +45,13 @@ impl PluginManager{
             pool
         };
 
+        instance.register_build_in_cmd();
+
         instance
+    }
+
+    pub fn get_plugins(&self) -> Vec<&PluginMetadata> {
+        self.plugin_metadata.values().collect()
     }
 
     pub fn register_plugin(&mut self,plugin: Box<dyn Plugin>){
@@ -136,6 +144,10 @@ impl PluginManager{
         Ok(())
     }
 
+    fn register_build_in_cmd(&mut self) {
+        self.root.add_cmd(get_module_cmd());
+    }
+
     pub fn call_event(&self, api: Arc<Api>, update: Update) -> anyhow::Result<()> {
         match &update.content {
             UpdateContent::Message(msg) |
@@ -147,6 +159,7 @@ impl PluginManager{
                             api,
                             message: msg.clone(),
                             pool: self.pool.clone(),
+                            plugin_manager: self,
                         };
                         text.remove(0);
                         let mut args = text.split(" ").map(|str| str.to_owned()).collect::<Vec<String>>();
@@ -181,7 +194,11 @@ impl PluginManager{
 
             match setting_result {
                 Ok(setting) => {
-                    Some((setting, f))
+                    if setting.enabled {
+                        return Some((setting, f));
+                    } else {
+                        return None;
+                    }
                 }
                 Err(error) => {
                     None
