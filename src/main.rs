@@ -36,7 +36,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build(manager)?;
 
     let mut plugin_manager = plugin::PluginManager::new(pool);
-    plugin_manager.register_plugin(Box::new(modules::demo::DemoPlugin{}));
+    plugin_manager.register_plugin(Box::new(modules::join_validation_math::DemoPlugin{}));
 
     plugin_manager.load_plugins();
     plugin_manager.enable_plugins();
